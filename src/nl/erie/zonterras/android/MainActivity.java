@@ -16,7 +16,12 @@ import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.View.OnTouchListener;
 import android.widget.Button;
+import android.widget.CompoundButton;
+import android.widget.CompoundButton.OnCheckedChangeListener;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.ToggleButton;
+
 import java.io.OutputStream;
 import android.content.ContentValues;
 import android.graphics.Bitmap.CompressFormat;
@@ -24,13 +29,14 @@ import android.provider.MediaStore.Images.Media;
 import android.widget.Toast;
 
 
-public class MainActivity extends Activity implements OnClickListener, OnTouchListener {
-//public class Test extends Activity implements OnClickListener, OnTouchListener {
+public class MainActivity extends Activity implements OnClickListener, OnCheckedChangeListener, OnTouchListener {
 
+  Button chooseButton;
+  ToggleButton drawmodeToggleButton;
+  Button saveButton;
+  LinearLayout imageviewContainer;
   ImageView choosenImageView;
-  Button choosePicture;
-  Button savePicture;
-
+  
   Bitmap bmp;
   Bitmap alteredBitmap;
   Canvas canvas;
@@ -46,23 +52,32 @@ public class MainActivity extends Activity implements OnClickListener, OnTouchLi
     super.onCreate(savedInstanceState);
     setContentView(R.layout.activity_main);
 
-    choosenImageView = (ImageView) this.findViewById(R.id.ChoosenImageView);
-    choosePicture = (Button) this.findViewById(R.id.ChoosePictureButton);
-    savePicture = (Button) this.findViewById(R.id.SavePictureButton);
+    chooseButton = (Button) this.findViewById(R.id.ChoosePictureButton);
+    drawmodeToggleButton = (ToggleButton) this.findViewById(R.id.toggleDrawmode);
+    saveButton = (Button) this.findViewById(R.id.SavePictureButton);
+    
+    choosenImageView = new ZoomableImageView(this, null);
+    imageviewContainer = (LinearLayout) this.findViewById(R.id.imageviewContainer);
+    imageviewContainer.addView(choosenImageView);
 
-    savePicture.setOnClickListener(this);
-    choosePicture.setOnClickListener(this);
-    choosenImageView.setOnTouchListener(this);
+    chooseButton.setOnClickListener(this);
+    drawmodeToggleButton.setOnCheckedChangeListener(this);
+    drawmodeToggleButton.setEnabled(false);
+    saveButton.setOnClickListener(this);
+    saveButton.setEnabled(false);
+    
   }
 
   public void onClick(View v) {
 
-    if (v == choosePicture) {
+    if (v == chooseButton) {
       Intent choosePictureIntent = new Intent(
           Intent.ACTION_PICK,
           android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
       startActivityForResult(choosePictureIntent, 0);
-    } else if (v == savePicture) {
+
+      
+    } else if (v == saveButton) {
 
       if (alteredBitmap != null) {
         ContentValues contentValues = new ContentValues(3);
@@ -79,6 +94,16 @@ public class MainActivity extends Activity implements OnClickListener, OnTouchLi
           Log.v("EXCEPTION", e.getMessage());
         }
       }
+    }
+  }
+  
+  @Override
+  public void onCheckedChanged(CompoundButton view, boolean checked) {
+    boolean on = ((ToggleButton) view).isChecked();
+    if (on) {
+        choosenImageView.setOnTouchListener(this);
+    } else {
+        choosenImageView.setOnTouchListener(null);
     }
   }
 
@@ -108,38 +133,42 @@ public class MainActivity extends Activity implements OnClickListener, OnTouchLi
         canvas.drawBitmap(bmp, matrix, paint);
 
         choosenImageView.setImageBitmap(alteredBitmap);
-        choosenImageView.setOnTouchListener(this);
+
+        drawmodeToggleButton.setEnabled(true);
+        saveButton.setEnabled(true);
+
       } catch (Exception e) {
         Log.v("ERROR", e.toString());
       }
     }
   }
   public boolean onTouch(View v, MotionEvent event) {
-    int action = event.getAction();
-    switch (action) {
-    case MotionEvent.ACTION_DOWN:
-      downx = event.getX();
-      downy = event.getY();
-      break;
-    case MotionEvent.ACTION_MOVE:
-      upx = event.getX();
-      upy = event.getY();
-      canvas.drawLine(downx, downy, upx, upy, paint);
-      choosenImageView.invalidate();
-      downx = upx;
-      downy = upy;
-      break;
-    case MotionEvent.ACTION_UP:
-      upx = event.getX();
-      upy = event.getY();
-      canvas.drawLine(downx, downy, upx, upy, paint);
-      choosenImageView.invalidate();
-      break;
-    case MotionEvent.ACTION_CANCEL:
-      break;
-    default:
-      break;
-    }
-    return true;
+	    int action = event.getAction();
+	    switch (action) {
+	    case MotionEvent.ACTION_DOWN:
+	      downx = event.getX();
+	      downy = event.getY();
+	      break;
+	    case MotionEvent.ACTION_MOVE:
+	      upx = event.getX();
+	      upy = event.getY();
+	      canvas.drawLine(downx, downy, upx, upy, paint);
+	      choosenImageView.invalidate();
+	      downx = upx;
+	      downy = upy;
+	      break;
+	    case MotionEvent.ACTION_UP:
+	      upx = event.getX();
+	      upy = event.getY();
+	      canvas.drawLine(downx, downy, upx, upy, paint);
+	      choosenImageView.invalidate();
+	      break;
+	    case MotionEvent.ACTION_CANCEL:
+	      break;
+	    default:
+	      break;
+	    }
+	  return true;
   }
+
 }

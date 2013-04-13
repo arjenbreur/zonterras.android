@@ -1,18 +1,41 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:orientation="vertical"
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
     >
-    <Button
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
-        android:text="Choose Picture" android:id="@+id/ChoosePictureButton"/>
-    <ImageView android:layout_width="wrap_content" 
-        android:layout_height="wrap_content" 
-        android:id="@+id/ChoosenImageView" />
-     <Button
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
-        android:text="Save Picture" android:id="@+id/SavePictureButton"/>
-</LinearLayout>
+    <LinearLayout
+        android:id="@+id/buttonContainer"
+	    android:layout_width="fill_parent" 
+	    android:layout_height="wrap_content"
+	    android:weightSum="1.0" >
+	    <Button
+	        android:id="@+id/ChoosePictureButton"
+	        android:layout_width="0dp"
+	        android:layout_height="wrap_content"
+	        android:layout_weight=".33"
+	        android:text="Choose" 
+	        />
+		<ToggleButton 
+		    android:id="@+id/toggleDrawmode"
+		    android:layout_width="0dp"
+		    android:layout_height="wrap_content"
+	        android:layout_weight=".33"
+		    android:textOn="Draw"
+		    android:textOff="Draw"
+		    />
+	     <Button
+	        android:id="@+id/SavePictureButton"
+	        android:layout_width="0dp"
+	        android:layout_height="wrap_content"
+	        android:layout_weight=".33"
+	        android:text="Save"
+	        />
+	</LinearLayout>
+    <LinearLayout
+        android:id="@+id/imageviewContainer"
+	    android:layout_width="fill_parent" 
+	    android:layout_height="fill_parent"
+	    android:layout_below="@id/buttonContainer">
+    </LinearLayout>
+</RelativeLayout>
