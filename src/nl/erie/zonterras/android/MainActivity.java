@@ -1,4 +1,4 @@
-package nl.erie.zonterras.poc;
+package nl.erie.zonterras.android;
 
 import android.app.Activity;
 import android.content.Intent;
