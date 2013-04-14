@@ -1,13 +1,22 @@
 package nl.erie.zonterras.android;
 
 import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.Matrix;
+import android.graphics.Paint;
+import android.net.Uri;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
+import android.view.View;
 import android.widget.ImageView;
+import android.view.View.OnTouchListener;
 
-public class ZoomableImageView extends ImageView {
+public class ZoomableImageView extends ImageView implements OnTouchListener {
 
     private static final int INVALID_POINTER_ID = -1;
 
@@ -23,8 +32,23 @@ public class ZoomableImageView extends ImageView {
     private ScaleGestureDetector mScaleDetector;
     private float mScaleFactor = 1.f;
 
+    
+    Bitmap bmp;
+    Bitmap alteredBitmap;
+    Canvas canvas;
+    Paint paint;
+    Matrix matrix;
+    float downx = 0;
+    float downy = 0;
+    float upx = 0;
+    float upy = 0;
+    
+    Context context;
+
+    
     public ZoomableImageView(Context context, AttributeSet attrs) {
         this(context, attrs, 0);
+        this.context = context;
         mScaleDetector = new ScaleGestureDetector(getContext(), new ScaleListener());
     }
 
@@ -32,7 +56,48 @@ public class ZoomableImageView extends ImageView {
         super(context, attrs, defStyle);
         mScaleDetector = new ScaleGestureDetector(context, new ScaleListener());
     }
+    
+    public float getScaleFactor(){
+    	return mScaleFactor;
+    }
 
+    public void setImageFileUri(Uri imageFileUri){
+        try {
+            BitmapFactory.Options bmpFactoryOptions = new BitmapFactory.Options();
+            bmpFactoryOptions.inJustDecodeBounds = true;
+            this.bmp = BitmapFactory.decodeStream(this.context.getContentResolver().openInputStream(
+                    imageFileUri), null, bmpFactoryOptions);
+
+            bmpFactoryOptions.inJustDecodeBounds = false;
+            this.bmp = BitmapFactory.decodeStream(this.context.getContentResolver().openInputStream(
+                    imageFileUri), null, bmpFactoryOptions);
+
+            this.alteredBitmap = Bitmap.createBitmap(
+            		this.bmp.getWidth(), 
+            		this.bmp.getHeight(), 
+            		this.bmp.getConfig()
+            );
+            this.canvas = new Canvas(this.alteredBitmap);
+            this.paint = new Paint();
+            this.paint.setColor(Color.GREEN);
+            this.paint.setStrokeWidth(5);
+            this.matrix = new Matrix();
+            this.canvas.drawBitmap(this.bmp, this.matrix, this.paint);
+
+            this.setImageBitmap(this.alteredBitmap);
+            
+
+          } catch (Exception e) {
+            Log.v("ERROR", e.toString());
+          }
+    }
+    
+    
+    
+    
+    
+    
+    
     @Override
     public boolean onTouchEvent(MotionEvent ev) {
         // Let the ScaleGestureDetector inspect all events.
@@ -133,9 +198,8 @@ public class ZoomableImageView extends ImageView {
 
     @Override
     public void onDraw(Canvas canvas) {
-
+        
         canvas.save();
-
         canvas.translate(mPosX, mPosY);
 
         if (mScaleDetector.isInProgress()) {
@@ -160,4 +224,38 @@ public class ZoomableImageView extends ImageView {
             return true;
         }
     }
+    
+    public boolean onTouch(View v, MotionEvent event) {
+	    int action = event.getAction();
+	    canvas.save();
+	    canvas.scale(this.getScaleFactor(),this.getScaleFactor());
+	    canvas.translate(100, 100);
+	    switch (action) {
+		    case MotionEvent.ACTION_DOWN:
+		      downx = event.getX();
+		      downy = event.getY();
+		      break;
+		    case MotionEvent.ACTION_MOVE:
+		      upx = event.getX();
+		      upy = event.getY();
+		      
+		      canvas.drawLine(downx, downy, upx, upy, paint);
+		      this.invalidate();
+		      downx = upx;
+		      downy = upy;
+		      break;
+		    case MotionEvent.ACTION_UP:
+		      upx = event.getX();
+		      upy = event.getY();
+		      canvas.drawLine(downx, downy, upx, upy, paint);
+		      this.invalidate();
+		      break;
+		    case MotionEvent.ACTION_CANCEL:
+		      break;
+		    default:
+		      break;
+	    }
+	    canvas.restore();
+	  return true;
+  }
 }

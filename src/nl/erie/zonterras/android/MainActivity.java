@@ -22,6 +22,7 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ToggleButton;
 
+import java.io.Console;
 import java.io.OutputStream;
 import android.content.ContentValues;
 import android.graphics.Bitmap.CompressFormat;
@@ -29,23 +30,24 @@ import android.provider.MediaStore.Images.Media;
 import android.widget.Toast;
 
 
-public class MainActivity extends Activity implements OnClickListener, OnCheckedChangeListener, OnTouchListener {
+//public class MainActivity extends Activity implements OnClickListener, OnCheckedChangeListener, OnTouchListener {
+public class MainActivity extends Activity implements OnClickListener, OnCheckedChangeListener {
 
   Button chooseButton;
   ToggleButton drawmodeToggleButton;
   Button saveButton;
   LinearLayout imageviewContainer;
-  ImageView choosenImageView;
+  ZoomableImageView choosenImageView;
   
-  Bitmap bmp;
-  Bitmap alteredBitmap;
-  Canvas canvas;
-  Paint paint;
-  Matrix matrix;
-  float downx = 0;
-  float downy = 0;
-  float upx = 0;
-  float upy = 0;
+//  Bitmap bmp;
+//  Bitmap alteredBitmap;
+//  Canvas canvas;
+//  Paint paint;
+//  Matrix matrix;
+//  float downx = 0;
+//  float downy = 0;
+//  float upx = 0;
+//  float upy = 0;
 
   @Override
   public void onCreate(Bundle savedInstanceState) {
@@ -79,14 +81,14 @@ public class MainActivity extends Activity implements OnClickListener, OnChecked
       
     } else if (v == saveButton) {
 
-      if (alteredBitmap != null) {
+      if (choosenImageView.alteredBitmap != null) {
         ContentValues contentValues = new ContentValues(3);
         contentValues.put(Media.DISPLAY_NAME, "Draw On Me");
 
         Uri imageFileUri = getContentResolver().insert(Media.EXTERNAL_CONTENT_URI, contentValues);
         try {
           OutputStream imageFileOS = getContentResolver().openOutputStream(imageFileUri);
-          alteredBitmap.compress(CompressFormat.JPEG, 90, imageFileOS);
+          choosenImageView.alteredBitmap.compress(CompressFormat.JPEG, 90, imageFileOS);
           Toast t = Toast.makeText(this, "Saved!", Toast.LENGTH_SHORT);
           t.show();
 
@@ -101,7 +103,7 @@ public class MainActivity extends Activity implements OnClickListener, OnChecked
   public void onCheckedChanged(CompoundButton view, boolean checked) {
     boolean on = ((ToggleButton) view).isChecked();
     if (on) {
-        choosenImageView.setOnTouchListener(this);
+        choosenImageView.setOnTouchListener(choosenImageView);
     } else {
         choosenImageView.setOnTouchListener(null);
     }
@@ -113,62 +115,13 @@ public class MainActivity extends Activity implements OnClickListener, OnChecked
 
     if (resultCode == RESULT_OK) {
       Uri imageFileUri = intent.getData();
-      try {
-        BitmapFactory.Options bmpFactoryOptions = new BitmapFactory.Options();
-        bmpFactoryOptions.inJustDecodeBounds = true;
-        bmp = BitmapFactory.decodeStream(getContentResolver().openInputStream(
-                imageFileUri), null, bmpFactoryOptions);
+      choosenImageView.setImageFileUri(imageFileUri);
+      // enable buttons
+      drawmodeToggleButton.setEnabled(true);
+      saveButton.setEnabled(true);
 
-        bmpFactoryOptions.inJustDecodeBounds = false;
-        bmp = BitmapFactory.decodeStream(getContentResolver().openInputStream(
-                imageFileUri), null, bmpFactoryOptions);
-
-        alteredBitmap = Bitmap.createBitmap(bmp.getWidth(), bmp
-            .getHeight(), bmp.getConfig());
-        canvas = new Canvas(alteredBitmap);
-        paint = new Paint();
-        paint.setColor(Color.GREEN);
-        paint.setStrokeWidth(5);
-        matrix = new Matrix();
-        canvas.drawBitmap(bmp, matrix, paint);
-
-        choosenImageView.setImageBitmap(alteredBitmap);
-
-        drawmodeToggleButton.setEnabled(true);
-        saveButton.setEnabled(true);
-
-      } catch (Exception e) {
-        Log.v("ERROR", e.toString());
-      }
     }
-  }
-  public boolean onTouch(View v, MotionEvent event) {
-	    int action = event.getAction();
-	    switch (action) {
-	    case MotionEvent.ACTION_DOWN:
-	      downx = event.getX();
-	      downy = event.getY();
-	      break;
-	    case MotionEvent.ACTION_MOVE:
-	      upx = event.getX();
-	      upy = event.getY();
-	      canvas.drawLine(downx, downy, upx, upy, paint);
-	      choosenImageView.invalidate();
-	      downx = upx;
-	      downy = upy;
-	      break;
-	    case MotionEvent.ACTION_UP:
-	      upx = event.getX();
-	      upy = event.getY();
-	      canvas.drawLine(downx, downy, upx, upy, paint);
-	      choosenImageView.invalidate();
-	      break;
-	    case MotionEvent.ACTION_CANCEL:
-	      break;
-	    default:
-	      break;
-	    }
-	  return true;
-  }
+  }  
+  
 
 }
