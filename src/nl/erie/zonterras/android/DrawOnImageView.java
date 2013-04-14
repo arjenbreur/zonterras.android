@@ -1,5 +1,7 @@
 package nl.erie.zonterras.android;
 
+import java.io.OutputStream;
+
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -7,6 +9,7 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Matrix;
 import android.graphics.Paint;
+import android.graphics.Bitmap.CompressFormat;
 import android.net.Uri;
 import android.util.AttributeSet;
 import android.util.Log;
@@ -14,9 +17,10 @@ import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
 import android.view.View;
 import android.widget.ImageView;
+import android.widget.Toast;
 import android.view.View.OnTouchListener;
 
-public class ZoomableImageView extends ImageView implements OnTouchListener {
+public class DrawOnImageView extends ImageView implements OnTouchListener {
 
     private static final int INVALID_POINTER_ID = -1;
 
@@ -32,6 +36,7 @@ public class ZoomableImageView extends ImageView implements OnTouchListener {
     private ScaleGestureDetector mScaleDetector;
     private float mScaleFactor = 1.f;
 
+    private boolean drawMode;
     
     Bitmap bmp;
     Bitmap alteredBitmap;
@@ -45,14 +50,15 @@ public class ZoomableImageView extends ImageView implements OnTouchListener {
     
     Context context;
 
+
     
-    public ZoomableImageView(Context context, AttributeSet attrs) {
+    public DrawOnImageView(Context context, AttributeSet attrs) {
         this(context, attrs, 0);
         this.context = context;
         mScaleDetector = new ScaleGestureDetector(getContext(), new ScaleListener());
     }
 
-    public ZoomableImageView(Context context, AttributeSet attrs, int defStyle) {
+    public DrawOnImageView(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
         mScaleDetector = new ScaleGestureDetector(context, new ScaleListener());
     }
@@ -60,8 +66,17 @@ public class ZoomableImageView extends ImageView implements OnTouchListener {
     public float getScaleFactor(){
     	return mScaleFactor;
     }
+    
+    public void setDrawmode(boolean mode){
+		this.drawMode = mode;
+    	if(mode==true){
+            this.setOnTouchListener(this);
+    	}else{
+            this.setOnTouchListener(null);
+    	}
+    }
 
-    public void setImageFileUri(Uri imageFileUri){
+    public void openImage(Uri imageFileUri){
         try {
             BitmapFactory.Options bmpFactoryOptions = new BitmapFactory.Options();
             bmpFactoryOptions.inJustDecodeBounds = true;
@@ -90,6 +105,17 @@ public class ZoomableImageView extends ImageView implements OnTouchListener {
           } catch (Exception e) {
             Log.v("ERROR", e.toString());
           }
+    }
+    
+    public void saveImage(Uri imageFileUri){
+		try {
+		    OutputStream imageFileOS = this.context.getContentResolver().openOutputStream(imageFileUri);
+		    this.alteredBitmap.compress(CompressFormat.JPEG, 90, imageFileOS);
+		    Toast t = Toast.makeText(this.context, "Saved!", Toast.LENGTH_SHORT);
+		    t.show();
+		} catch (Exception e) {
+		    Log.v("EXCEPTION", e.getMessage());
+		}
     }
     
     
